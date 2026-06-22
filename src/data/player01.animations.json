@@ -1,0 +1,183 @@
+{
+  "spriteSheet": "assets/images/player01.png",
+  "animations": {
+    "idle": {
+      "sourceRows": [1],
+      "sourceLabels": ["idle"],
+      "frames": [
+        [0, 0, 60, 120],
+        [60, 0, 60, 120],
+        [120, 0, 60, 120],
+        [180, 0, 60, 120]
+      ],
+      "frameDurations": [1000, 1000, 1000, 1000],
+      "loop": true
+    },
+    "walk_in": {
+      "sourceRows": [2],
+      "sourceLabels": ["walk", "intro"],
+      "frames": [
+        [0, 120, 60, 120],
+        [60, 120, 60, 120],
+        [120, 120, 60, 120],
+        [180, 120, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "pathingNormalized": true,
+      "pathing": [
+        [1.0, 1.0, 0.5, 0.0]
+      ],
+      "pathingDurations": [1400],
+      "loop": false
+    },
+    "jab": {
+      "sourceRows": [3],
+      "sourceLabels": ["jab"],
+      "frames": [
+        [0, 240, 60, 120],
+        [60, 240, 60, 120],
+        [120, 240, 60, 120],
+        [180, 240, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "cross": {
+      "sourceRows": [4],
+      "sourceLabels": ["cross"],
+      "frames": [
+        [0, 360, 60, 120],
+        [60, 360, 60, 120],
+        [120, 360, 60, 120],
+        [180, 360, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "hook": {
+      "sourceRows": [5],
+      "sourceLabels": ["hook"],
+      "frames": [
+        [0, 480, 60, 120],
+        [60, 480, 60, 120],
+        [120, 480, 60, 120],
+        [180, 480, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "uppercut": {
+      "sourceRows": [6],
+      "sourceLabels": ["uppercut"],
+      "frames": [
+        [0, 600, 60, 120],
+        [60, 600, 60, 120],
+        [120, 600, 60, 120],
+        [180, 600, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "knocked_down": {
+      "sourceRows": [7],
+      "sourceLabels": ["knocked_down"],
+      "frames": [
+        [0, 720, 60, 120],
+        [60, 720, 60, 120],
+        [120, 720, 60, 120],
+        [180, 720, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "block": {
+      "sourceRows": [8],
+      "sourceLabels": ["block"],
+      "frames": [
+        [0, 840, 60, 120],
+        [60, 840, 60, 120],
+        [120, 840, 60, 120],
+        [180, 840, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "dodge": {
+      "sourceRows": [9],
+      "sourceLabels": ["dodge"],
+      "frames": [
+        [0, 960, 60, 120],
+        [60, 960, 60, 120],
+        [120, 960, 60, 120],
+        [180, 960, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    }
+  },
+  "defaultAnimation": "idle",
+  "pathing": [],
+  "metadata": {
+    "name": "Bruiser Buckee",
+    "totalWidth": 240,
+    "totalHeight": 1080,
+    "scale": 1.0,
+    "rowHeight": 120,
+    "rowGuide": [
+      {
+        "row": 1,
+        "label": "idle",
+        "y": 0,
+        "frameRange": [0, 0, 240, 120]
+      },
+      {
+        "row": 2,
+        "label": "walk",
+        "y": 120,
+        "frameRange": [0, 120, 240, 240]
+      },
+      {
+        "row": 3,
+        "label": "jab",
+        "y": 240,
+        "frameRange": [0, 240, 240, 360]
+      },
+      {
+        "row": 4,
+        "label": "cross",
+        "y": 360,
+        "frameRange": [0, 360, 240, 480]
+      },
+      {
+        "row": 5,
+        "label": "hook",
+        "y": 480,
+        "frameRange": [0, 480, 240, 600]
+      },
+      {
+        "row": 6,
+        "label": "uppercut",
+        "y": 600,
+        "frameRange": [0, 600, 240, 720]
+      },
+      {
+        "row": 7,
+        "label": "knocked_down",
+        "y": 720,
+        "frameRange": [0, 720, 240, 840]
+      },
+      {
+        "row": 8,
+        "label": "block",
+        "y": 840,
+        "frameRange": [0, 840, 240, 960]
+      },
+      {
+        "row": 9,
+        "label": "dodge",
+        "y": 960,
+        "frameRange": [0, 960, 240, 1080]
+      }
+    ]
+  }
+}
