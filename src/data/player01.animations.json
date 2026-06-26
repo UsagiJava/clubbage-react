@@ -113,6 +113,59 @@
       ],
       "frameDurations": [350, 350, 350, 350],
       "loop": false
+    },
+    "lay": {
+      "sourceRows": [10],
+      "sourceLabels": ["lay"],
+      "frames": [
+        [0, 1080, 60, 120],
+        [60, 1080, 60, 120],
+        [120, 1080, 60, 120],
+        [180, 1080, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "pathingNormalized": true,
+      "pathing": [
+        [0.0, 0.5, 1.0, 1.0]
+      ],
+      "pathingDurations": [1400],
+      "loop": false
+    },
+    "stumble": {
+      "sourceRows": [11],
+      "sourceLabels": ["stumble"],
+      "frames": [
+        [0, 1200, 60, 120],
+        [60, 1200, 60, 120],
+        [120, 1200, 60, 120],
+        [180, 1200, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "taunt": {
+      "sourceRows": [12],
+      "sourceLabels": ["taunt"],
+      "frames": [
+        [0, 1320, 60, 120],
+        [60, 1320, 60, 120],
+        [120, 1320, 60, 120],
+        [180, 1320, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
+    },
+    "victory_pose": {
+      "sourceRows": [13],
+      "sourceLabels": ["victory_pose"],
+      "frames": [
+        [0, 1440, 60, 120],
+        [60, 1440, 60, 120],
+        [120, 1440, 60, 120],
+        [180, 1440, 60, 120]
+      ],
+      "frameDurations": [350, 350, 350, 350],
+      "loop": false
     }
   },
   "defaultAnimation": "idle",
@@ -120,7 +173,7 @@
   "metadata": {
     "name": "Bruiser Buckee",
     "totalWidth": 240,
-    "totalHeight": 1080,
+    "totalHeight": 1560,
     "scale": 1.0,
     "rowHeight": 120,
     "rowGuide": [
@@ -177,6 +230,30 @@
         "label": "dodge",
         "y": 960,
         "frameRange": [0, 960, 240, 1080]
+      },
+      {
+        "row": 10,
+        "label": "lay",
+        "y": 1080,
+        "frameRange": [0, 1080, 240, 1200]
+      },
+      {
+        "row": 11,
+        "label": "stumble",
+        "y": 1200,
+        "frameRange": [0, 1200, 240, 1320]
+      },
+      {
+        "row": 12,
+        "label": "taunt",
+        "y": 1320,
+        "frameRange": [0, 1320, 240, 1440]
+      },
+      {
+        "row": 13,
+        "label": "victory_pose",
+        "y": 1440,
+        "frameRange": [0, 1440, 240, 1560]
       }
     ]
   }

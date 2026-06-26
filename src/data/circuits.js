@@ -6,6 +6,7 @@ export const CIRCUITS = [
         opponents: [
             {
                 id: 0,
+                incompetence: 90,
                 hp: 50,
                 name: "Gris&aacute;ceo Sieger",
                 description: "Victory: not always black &amp; white, sometimes it's gray.",
@@ -28,6 +29,7 @@ export const CIRCUITS = [
             },
             {
                 id: 1,
+                incompetence: 70,
                 hp: 60,
                 name: "Loquito Carlito",
                 description: "Genius or Madness?...Why not both?",
@@ -50,6 +52,7 @@ export const CIRCUITS = [
             },
             {
                 id: 2,
+                incompetence: 50,
                 hp: 70,
                 name: "Andre the Uncompliant",
                 description: "Here's a game for ya, 52 card pickup!  HA HA!",
@@ -79,6 +82,7 @@ export const CIRCUITS = [
         opponents: [
             {
                 id: 0,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",
@@ -101,6 +105,7 @@ export const CIRCUITS = [
             },
             {
                 id: 1,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",
@@ -123,6 +128,7 @@ export const CIRCUITS = [
             },
             {
                 id: 2,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",
@@ -152,6 +158,7 @@ export const CIRCUITS = [
         opponents: [
             {
                 id: 0,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",
@@ -174,6 +181,7 @@ export const CIRCUITS = [
             },
             {
                 id: 1,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",
@@ -196,6 +204,7 @@ export const CIRCUITS = [
             },
             {
                 id: 2,
+                incompetence: 100,
                 hp: 0,
                 name: "TBD",
                 description: "TBD",

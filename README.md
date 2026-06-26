@@ -124,7 +124,6 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 Todo:
 
-- Add more animations to boxer0x.animations.json, player0x.animations.json, boxer0x.png, and player0x.png. Examples: "lay", "stumble", "taunt", and "victoryPose"
 - Use onAnimationComplete callback to chain animations or trigger follow-up events. Example: stumble off-balanced to fall and then to be laying on the mat.
 
 
