@@ -859,9 +859,11 @@ function Game() {
         addCommentaryEntry("[Barrage] complete.", "game_info");
         addCommentaryEntry("Bell is about to ring. Close the round strong!", "game_info");
 
+        const preClosingSnapshot = getBarrageSnapshot(roundState, null, null);
+
         let closingRound;
         try {
-            closingRound = applyClosingRoundScoring(roundState);
+            closingRound = applyClosingRoundScoring(roundState, { applyDamage: false });
         } catch (error) {
             console.error("Closing round scoring failed:", error);
             addCommentaryEntry("[Closing Round] scoring failed; resolving round with current totals.", "game_warning");
@@ -875,6 +877,9 @@ function Game() {
             addCommentaryEntry(warning, "game_warning");
         }
 
+        let runningPlayerHp = { ...preClosingSnapshot.playerHp };
+        let runningOpponentHp = { ...preClosingSnapshot.opponentHp };
+
         const scoredEvents = closingRound.events.filter((event) => event && event.points > 0);
         for (let index = 0; index < scoredEvents.length; index += 1) {
             const event = scoredEvents[index];
@@ -886,11 +891,41 @@ function Game() {
                 buildAttackCommentary(attackerDeck, defenderDeck, event.points, event.reasonLabel),
                 "game_action"
             );
-            if(event.scoringDeckName === "player2Deck") {
+            let animationRan = false;
+            if (event.scoringDeckName === "player2Deck") {
                 await playOpponentAnimationFromDamage(event.points);
+                animationRan = true;
             }
-            if(event.scoringDeckName === "player1Deck") {
+            if (event.scoringDeckName === "player1Deck") {
                 await playPlayerAnimationFromDamage(event.points);
+                animationRan = true;
+            }
+            if (event.scoringDeckName === "player1Deck") {
+                runningOpponentHp = {
+                    ...runningOpponentHp,
+                    current: Math.max(0, runningOpponentHp.current - event.points)
+                };
+                roundState.hp.opponent = { ...runningOpponentHp };
+            } else {
+                runningPlayerHp = {
+                    ...runningPlayerHp,
+                    current: Math.max(0, runningPlayerHp.current - event.points)
+                };
+                roundState.hp.player = { ...runningPlayerHp };
+            }
+            setBarrageState((previous) => {
+                if (!previous) {
+                    return previous;
+                }
+
+                return {
+                    ...previous,
+                    playerHp: { ...runningPlayerHp },
+                    opponentHp: { ...runningOpponentHp }
+                };
+            });
+            if (animationRan) {
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
             if (index < scoredEvents.length - 1) {
                 await new Promise((resolve) => setTimeout(resolve, 1250));

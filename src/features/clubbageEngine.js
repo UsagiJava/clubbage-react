@@ -377,13 +377,13 @@ export function submitBarrageGo(roundState, deckName) {
 
 // ─── Closing the Round (Show) Phase ─────────────────────────────────────────────────────
 
-function applyClosingRoundDamage(roundState, scoringDeckName, points) {
+function applyClosingRoundDamage(hpState, scoringDeckName, points) {
     if (points <= 0) return;
 
     if (scoringDeckName === "player1Deck") {
-        roundState.hp.opponent.current = Math.max(0, roundState.hp.opponent.current - points);
+        hpState.opponent.current = Math.max(0, hpState.opponent.current - points);
     } else {
-        roundState.hp.player.current = Math.max(0, roundState.hp.player.current - points);
+        hpState.player.current = Math.max(0, hpState.player.current - points);
     }
 }
 
@@ -401,7 +401,7 @@ function describeShowScoring(result) {
  * Apply end-of-round show scoring (both hands + crib) after barrage is complete.
  * Returns scoring events and warnings for UI commentary.
  */
-export function applyClosingRoundScoring(roundState) {
+export function applyClosingRoundScoring(roundState, { applyDamage = true } = {}) {
     const warnings = [];
     const events = [];
     const result = {
@@ -411,9 +411,20 @@ export function applyClosingRoundScoring(roundState) {
         knockoutDeckName: null
     };
 
+    const hpState = {
+        player: { ...roundState.hp.player },
+        opponent: { ...roundState.hp.opponent }
+    };
+
+    const syncRoundHpState = () => {
+        if (!applyDamage) return;
+        roundState.hp.player = { ...hpState.player };
+        roundState.hp.opponent = { ...hpState.opponent };
+    };
+
     const detectKnockoutDeckName = () => {
-        if (roundState?.hp?.player?.current <= 0) return "player1Deck";
-        if (roundState?.hp?.opponent?.current <= 0) return "player2Deck";
+        if (hpState.player.current <= 0) return "player1Deck";
+        if (hpState.opponent.current <= 0) return "player2Deck";
         return null;
     };
 
@@ -449,9 +460,11 @@ export function applyClosingRoundScoring(roundState) {
         }
     ];
 
+    // Score each player's hand before the crib.
     for (const item of scoringOrder) {
         const result = cribbageRules.scoreHand(item.hand, starterCard, false);
-        applyClosingRoundDamage(roundState, item.deckName, result.total);
+        applyClosingRoundDamage(hpState, item.deckName, result.total);
+        syncRoundHpState();
         events.push({
             scoringDeckName: item.deckName,
             points: result.total,
@@ -469,9 +482,11 @@ export function applyClosingRoundScoring(roundState) {
         }
     }
 
+    // Score the crib.
     const cribCards = [...(roundState?.decks?.cribDeck?.deck?.getCards() ?? [])];
     const cribResult = cribbageRules.scoreHand(cribCards, starterCard, true);
-    applyClosingRoundDamage(roundState, dealerDeckName, cribResult.total);
+    applyClosingRoundDamage(hpState, dealerDeckName, cribResult.total);
+    syncRoundHpState();
     events.push({
         scoringDeckName: dealerDeckName,
         points: cribResult.total,
