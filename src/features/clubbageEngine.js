@@ -375,6 +375,8 @@ export function submitBarrageGo(roundState, deckName) {
     return true;
 }
 
+// ─── Closing the Round (Show) Phase ─────────────────────────────────────────────────────
+
 function applyClosingRoundDamage(roundState, scoringDeckName, points) {
     if (points <= 0) return;
 
