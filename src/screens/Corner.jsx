@@ -103,7 +103,7 @@ function Corner({
                         </p>
                     )}
 
-                    <p className="mb-2">Select 2 cards to send to {cornerBreak?.cribOwner === 1 ? "your" : "opponent's"} crib:</p>
+                    <p className="mb-2">Select 2 cards to send to <span className="corner-decision__span">{cornerBreak?.cribOwner === 1 ? "your" : "opponent's"}</span> crib:</p>
 
                     <HandDisplay
                         hand={cornerBreak?.playerHand || []}
@@ -166,9 +166,9 @@ function Corner({
 
 
                     {!isOpponentAi ? (
-                        <p className="mb-2">Select 2 cards to send to {cornerBreak?.cribOwner === 2 ? "your" : "opponent's"} crib:</p>
+                        <p className="mb-2">Select 2 cards to send to <span className="corner-decision__span">{cornerBreak?.cribOwner === 2 ? "your" : "opponent's"}</span> crib:</p>
                     ) : (
-                        <p className="mb-2">Opponent is thinking cards to send to {cornerBreak?.cribOwner === 2 ? "their" : "your"} crib...</p>
+                        <p className="mb-2">Opponent is thinking cards to send to <span className="corner-decision__span">{cornerBreak?.cribOwner === 2 ? "their" : "your"}</span> crib...</p>
                     )}
 
                     <div id="player2_hand">

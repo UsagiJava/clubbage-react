@@ -122,16 +122,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
   - Dynamically swaps frame set from config JSON
 
 
-Todo:
+# Todo:
 
 - Use onAnimationComplete callback to chain animations or trigger follow-up events. Example: stumble off-balanced to fall and then to be laying on the mat.
-
-- Update build so you do not need to update the index.html file FROM,
-    <script defer="defer" src="/static/js/main.b81357d4.js"></script>
-    <link href="/static/css/main.04dde700.css" rel="stylesheet">
-TO:
-    <script defer="defer" src="static/js/main.b81357d4.js"></script>
-    <link href="static/css/main.04dde700.css" rel="stylesheet">
-
-- Update build so that you do not need to place images under, https://delugeonal.com/static/media/boxer01.3a9de9765d9bb567ea5a.png
-
+- flip an image so orthodox and southpaw can happen

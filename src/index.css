@@ -447,6 +447,10 @@ body {
     font-weight: 700;
 }
 
+.corner-decision__span {
+    color: #ffda6a;
+}
+
 .hit-bar__label {
     color: var(--cream);
 }
