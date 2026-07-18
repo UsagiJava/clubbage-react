@@ -101,6 +101,12 @@ Your app is ready to be deployed!
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
 
+Reboot it all to heck
+
+### `rm -rf node_modules package-lock.json`
+### `npm cache clean --force`
+### `npm install`
+
 
 # Animation Flow:
 
