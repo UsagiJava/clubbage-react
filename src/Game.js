@@ -103,13 +103,9 @@ function Game() {
     const barrageRoundRef = useRef(null);
     const aiBarrageInFlightRef = useRef(false);
     const commentaryIdRef = useRef(1);
-    const opponentAnimationTimeoutRef = useRef(null);
-    const opponentAnimationResolveRef = useRef(null);
-    const opponentAnimationNameRef = useRef(null);
-
-    const playerAnimationTimeoutRef = useRef(null);
-    const playerAnimationResolveRef = useRef(null);
-    const playerAnimationNameRef = useRef(null);
+    const opponentAnimationWaiterRef = useRef(null);
+    const playerAnimationWaiterRef = useRef(null);
+    const animationScriptTokenRef = useRef(0);
 
     const barrageStyleStateRef = useRef({
         player1Deck: { hasStanceOrthodox: false, hasStanceSouthpaw: false, hasChamberedArms: false },
@@ -151,37 +147,158 @@ function Game() {
         });
     };
 
-    const clearPendingOpponentAnimation = () => {
-        if (opponentAnimationTimeoutRef.current) {
-            window.clearTimeout(opponentAnimationTimeoutRef.current);
-            opponentAnimationTimeoutRef.current = null;
-        }
+    const getAnimationWaiterRef = (actor) => {
+        return actor === "player" ? playerAnimationWaiterRef : opponentAnimationWaiterRef;
+    };
 
-        if (typeof opponentAnimationResolveRef.current === "function") {
-            const pendingResolve = opponentAnimationResolveRef.current;
-            opponentAnimationResolveRef.current = null;
-            opponentAnimationNameRef.current = null;
-            pendingResolve();
+    const setActorAnimation = (actor, animationName) => {
+        if (actor === "player") {
+            setActivePlayerAnimation(animationName);
+        } else {
+            setActiveOpponentAnimation(animationName);
         }
     };
 
-    const clearPendingPlayerAnimation = () => {
-        if (playerAnimationTimeoutRef.current) {
-            window.clearTimeout(playerAnimationTimeoutRef.current);
-            playerAnimationTimeoutRef.current = null;
+    const logActorAnimationAction = (actor, action, animation, extra = {}) => {
+        if (actor === "player") {
+            logPlayerAnimationAction(action, animation, extra);
+            return;
+        }
+        logOpponentAnimationAction(action, animation, extra);
+    };
+
+    const resolveAnimationWaiter = (actor, completedAnimation, extra = {}) => {
+        const waiterRef = getAnimationWaiterRef(actor);
+        const waiter = waiterRef.current;
+        if (!waiter || waiter.animationName !== completedAnimation) {
+            return false;
         }
 
-        if (typeof playerAnimationResolveRef.current === "function") {
-            const pendingResolve = playerAnimationResolveRef.current;
-            playerAnimationResolveRef.current = null;
-            playerAnimationNameRef.current = null;
-            pendingResolve();
+        if (waiter.timeoutId) {
+            window.clearTimeout(waiter.timeoutId);
         }
+
+        waiterRef.current = null;
+
+        if (waiter.returnToIdle) {
+            setActorAnimation(actor, "idle");
+        }
+
+        if (typeof waiter.resolve === "function") {
+            waiter.resolve(completedAnimation);
+        }
+
+        logActorAnimationAction(actor, "animation-complete", waiter.returnToIdle ? "idle" : completedAnimation, {
+            completedAnimation,
+            ...extra
+        });
+
+        return true;
+    };
+
+    const clearPendingAnimationWaiter = (actor, options = {}) => {
+        const { resolvePending = true, setIdle = false } = options;
+        const waiterRef = getAnimationWaiterRef(actor);
+        const waiter = waiterRef.current;
+        if (!waiter) {
+            return;
+        }
+
+        if (waiter.timeoutId) {
+            window.clearTimeout(waiter.timeoutId);
+        }
+
+        waiterRef.current = null;
+
+        if (setIdle) {
+            setActorAnimation(actor, "idle");
+        }
+
+        if (resolvePending && typeof waiter.resolve === "function") {
+            waiter.resolve(waiter.animationName);
+        }
+    };
+
+    const clearPendingOpponentAnimation = (options = {}) => {
+        clearPendingAnimationWaiter("opponent", options);
+    };
+
+    const clearPendingPlayerAnimation = (options = {}) => {
+        clearPendingAnimationWaiter("player", options);
+    };
+
+    const playActorAnimation = (actor, animationName, options = {}) => {
+        const {
+            fallbackMs = 5000,
+            returnToIdle = true,
+            action = "play"
+        } = options;
+
+        clearPendingAnimationWaiter(actor, { resolvePending: true, setIdle: false });
+        setActorAnimation(actor, animationName);
+        logActorAnimationAction(actor, action, animationName, { fallbackMs });
+
+        return new Promise((resolve) => {
+            const timeoutId = window.setTimeout(() => {
+                resolveAnimationWaiter(actor, animationName, { reason: "timeout" });
+            }, Math.max(1, fallbackMs));
+
+            const waiterRef = getAnimationWaiterRef(actor);
+            waiterRef.current = {
+                animationName,
+                returnToIdle,
+                resolve,
+                timeoutId
+            };
+        });
+    };
+
+    const runAnimationScript = async (steps, options = {}) => {
+        const { lockRoundIntro = false } = options;
+        const scriptToken = animationScriptTokenRef.current + 1;
+        animationScriptTokenRef.current = scriptToken;
+
+        clearPendingOpponentAnimation({ resolvePending: true, setIdle: true });
+        clearPendingPlayerAnimation({ resolvePending: true, setIdle: true });
+
+        if (lockRoundIntro) {
+            setIsRoundIntroComplete(false);
+        }
+
+        for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+            if (animationScriptTokenRef.current !== scriptToken) {
+                return;
+            }
+
+            const step = steps[stepIndex];
+            const parallelAnimations = Array.isArray(step) ? step : [step];
+            await Promise.all(
+                parallelAnimations.map((entry) =>
+                    playActorAnimation(entry.actor, entry.animation, entry.options)
+                )
+            );
+        }
+
+        if (lockRoundIntro && animationScriptTokenRef.current === scriptToken) {
+            setIsRoundIntroComplete(true);
+        }
+    };
+
+    const animationStep = (actor, animation, options = {}) => ({
+        actor,
+        animation,
+        options
+    });
+
+    const playSequence = (steps, options = {}) => {
+        return runAnimationScript(steps, options);
+    };
+
+    const playParallel = (steps, options = {}) => {
+        return runAnimationScript([steps], options);
     };
 
     const playOpponentAnimationFromDamage = (damagePoints = 0) => {
-        clearPendingOpponentAnimation();
-
         if (damagePoints <= 0) {
             setActiveOpponentAnimation("idle");
             logOpponentAnimationAction("no-scoring-play", "idle", { damagePoints });
@@ -189,29 +306,14 @@ function Game() {
         }
 
         const animationToPlay = getAttackName(damagePoints);
-        setActiveOpponentAnimation(animationToPlay);
-        logOpponentAnimationAction("opponent-scored", animationToPlay, { damagePoints });
-
-        return new Promise((resolve) => {
-            opponentAnimationResolveRef.current = resolve;
-            opponentAnimationNameRef.current = animationToPlay;
-
-            opponentAnimationTimeoutRef.current = window.setTimeout(() => {
-                if (typeof opponentAnimationResolveRef.current === "function") {
-                    const pendingResolve = opponentAnimationResolveRef.current;
-                    opponentAnimationResolveRef.current = null;
-                    opponentAnimationNameRef.current = null;
-                    setActiveOpponentAnimation("idle");
-                    pendingResolve(animationToPlay);
-                }
-                opponentAnimationTimeoutRef.current = null;
-            }, 4000);
+        return playActorAnimation("opponent", animationToPlay, {
+            action: "opponent-scored",
+            fallbackMs: 4000,
+            returnToIdle: true
         });
     };
 
     const playPlayerAnimationFromDamage = (damagePoints = 0) => {
-        clearPendingPlayerAnimation();
-
         if (damagePoints <= 0) {
             setActivePlayerAnimation("idle");
             logPlayerAnimationAction("no-scoring-play", "idle", { damagePoints });
@@ -219,23 +321,10 @@ function Game() {
         }
 
         const animationToPlay = getAttackName(damagePoints);
-        setActivePlayerAnimation(animationToPlay);
-        logPlayerAnimationAction("player-scored", animationToPlay, { damagePoints });
-
-        return new Promise((resolve) => {
-            playerAnimationResolveRef.current = resolve;
-            playerAnimationNameRef.current = animationToPlay;
-
-            playerAnimationTimeoutRef.current = window.setTimeout(() => {
-                if (typeof playerAnimationResolveRef.current === "function") {
-                    const pendingResolve = playerAnimationResolveRef.current;
-                    playerAnimationResolveRef.current = null;
-                    playerAnimationNameRef.current = null;
-                    setActivePlayerAnimation("idle");
-                    pendingResolve(animationToPlay);
-                }
-                playerAnimationTimeoutRef.current = null;
-            }, 4000);
+        return playActorAnimation("player", animationToPlay, {
+            action: "player-scored",
+            fallbackMs: 4000,
+            returnToIdle: true
         });
     };
 
@@ -249,64 +338,28 @@ function Game() {
 
     const handleOpponentAnimationComplete = (animationEvent) => {
         const completedAnimation = animationEvent?.animationName;
-        if (completedAnimation === "walk_in") {
-            setActiveOpponentAnimation("idle");
-            setIsRoundIntroComplete(true);
-            logOpponentAnimationAction("animation-complete", "idle", {
-                completedAnimation
-            });
-            return;
-        }
+        if (!completedAnimation) return;
+        if (resolveAnimationWaiter("opponent", completedAnimation, { reason: "callback" })) return;
 
-        if (["attack", "jab", "cross", "hook", "uppercut"].includes(completedAnimation)) {
+        if (completedAnimation !== "idle") {
             setActiveOpponentAnimation("idle");
-            if (opponentAnimationTimeoutRef.current) {
-                window.clearTimeout(opponentAnimationTimeoutRef.current);
-                opponentAnimationTimeoutRef.current = null;
-            }
-            if (
-                typeof opponentAnimationResolveRef.current === "function" &&
-                opponentAnimationNameRef.current === completedAnimation
-            ) {
-                const pendingResolve = opponentAnimationResolveRef.current;
-                opponentAnimationResolveRef.current = null;
-                opponentAnimationNameRef.current = null;
-                pendingResolve(completedAnimation);
-            }
             logOpponentAnimationAction("animation-complete", "idle", {
-                completedAnimation
+                completedAnimation,
+                reason: "untracked"
             });
         }
     };
 
     const handlePlayerAnimationComplete = (animationEvent) => {
         const completedAnimation = animationEvent?.animationName;
-        if (completedAnimation === "walk_in") {
-            setActivePlayerAnimation("idle");
-            setIsRoundIntroComplete(true);
-            logPlayerAnimationAction("animation-complete", "idle", {
-                completedAnimation
-            });
-            return;
-        }
+        if (!completedAnimation) return;
+        if (resolveAnimationWaiter("player", completedAnimation, { reason: "callback" })) return;
 
-        if (["attack", "jab", "cross", "hook", "uppercut"].includes(completedAnimation)) {
+        if (completedAnimation !== "idle") {
             setActivePlayerAnimation("idle");
-            if (playerAnimationTimeoutRef.current) {
-                window.clearTimeout(playerAnimationTimeoutRef.current);
-                playerAnimationTimeoutRef.current = null;
-            }
-            if (
-                typeof playerAnimationResolveRef.current === "function" &&
-                playerAnimationNameRef.current === completedAnimation
-            ) {
-                const pendingResolve = playerAnimationResolveRef.current;
-                playerAnimationResolveRef.current = null;
-                playerAnimationNameRef.current = null;
-                pendingResolve(completedAnimation);
-            }
             logPlayerAnimationAction("animation-complete", "idle", {
-                completedAnimation
+                completedAnimation,
+                reason: "untracked"
             });
         }
     };
@@ -611,13 +664,18 @@ function Game() {
                     setSelectedBarragePlayerCardId(null);
                     setSelectedBarrageOpponentCardId(null);
                     setBarrageState(getBarrageSnapshot(barrageRound, null, null));
-                    if (opponentAnimationTimeoutRef.current) {
-                        window.clearTimeout(opponentAnimationTimeoutRef.current);
-                        opponentAnimationTimeoutRef.current = null;
-                    }
-                    setIsRoundIntroComplete(false);
-                    setActiveOpponentAnimation("walk_in");
-                    logOpponentAnimationAction("round-start", "walk_in", { roundNumber: matchState.roundNumber });
+                    void playSequence([
+                        animationStep("opponent", "walk_in", {
+                            action: "round-start",
+                            fallbackMs: 5000,
+                            returnToIdle: true
+                        }),
+                        animationStep("player", "walk_in", {
+                            action: "round-start",
+                            fallbackMs: 5000,
+                            returnToIdle: true
+                        })
+                    ], { lockRoundIntro: true });
                     addCommentaryEntry("[Barrage] start.", "game_info");
                     if (barrageRound.barrage?.nibsPoints > 0) {
                         const starterCard = barrageRound.decks.flipDeck?.deck?.getCards()?.[0] || null;
@@ -671,13 +729,16 @@ function Game() {
     const resetBarrageForNextRound = () => {
         barrageRoundRef.current = null;
         aiBarrageInFlightRef.current = false;
-        clearPendingOpponentAnimation();
+        animationScriptTokenRef.current += 1;
+        clearPendingOpponentAnimation({ resolvePending: true, setIdle: true });
+        clearPendingPlayerAnimation({ resolvePending: true, setIdle: true });
         resetBarrageStyleState();
         setBarrageState(null);
         setSelectedBarragePlayerCardId(null);
         setSelectedBarrageOpponentCardId(null);
         setIsRoundIntroComplete(true);
         setActiveOpponentAnimation("idle");
+        setActivePlayerAnimation("idle");
     };
 
     const resolveRound = (winner, options = {}) => {
