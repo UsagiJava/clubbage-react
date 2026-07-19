@@ -82,6 +82,7 @@ function Ring({
     isRoundIntroComplete,
     activeOpponentAnimation,
     activePlayerAnimation,
+    isPlayerSouthpaw,
     onOpponentAnimationComplete,
     onPlayerAnimationComplete
 }) {
@@ -100,6 +101,7 @@ function Ring({
     const playerActive = barrage?.activeBarrageDeckName === "player1Deck";
     const opponentActive = barrage?.activeBarrageDeckName === "player2Deck";
     const isRoundLocked = !isRoundIntroComplete;
+    const hidePlayerDuringOpponentIntro = !isRoundIntroComplete && activePlayerAnimation !== "walk_in";
 
     const playerHasLegalCard = (barrage?.playerHand || []).some(
         (c) => (barrage?.pegCount ?? 0) + c.pegValue <= 31
@@ -354,8 +356,9 @@ function Ring({
                         stageHeight={spriteStageHeight}
                         animationToRun={playerSpriteAnimation}
                         activeAnimation={activePlayerAnimation}
-                        className="barrage-player-sprite"
+                        className={hidePlayerDuringOpponentIntro ? "barrage-player-sprite--intro-hidden" : ""}
                         floorOffset={PLAYER_STAGE_FLOOR_OFFSET}
+                        mirrorX={Boolean(isPlayerSouthpaw)}
                         onAnimationComplete={onPlayerAnimationComplete}
                     />
                 ) : null}

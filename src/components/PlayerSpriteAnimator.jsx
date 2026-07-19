@@ -12,6 +12,11 @@ const toFiniteNumber = (value, fallback = 0) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const toOpacity = (value, fallback = 1) => {
+    const numeric = toFiniteNumber(value, fallback);
+    return Math.max(0, Math.min(1, numeric));
+};
+
 const resolveAxisValue = (value, maxRange, normalizedMode) => {
     const numericValue = toFiniteNumber(value, 0);
     if (!normalizedMode) {
@@ -182,6 +187,7 @@ function PlayerSpriteAnimator({
     className,
     floorOffset = 76,
     sidePadding = 24,
+    mirrorX = false,
     ariaLabel = "Animated player sprite",
     onAnimationComplete
 }) {
@@ -213,19 +219,23 @@ function PlayerSpriteAnimator({
 
         const firstFrame = frames[0] ?? DEFAULT_FRAME;
         const frameWidth = firstFrame[2] ?? DEFAULT_FRAME[2];
+        const frameHeight = firstFrame[3] ?? DEFAULT_FRAME[3];
 
         const metadata = animationToRun?.metadata || {};
+        const visualDefaults = animationToRun?.visualDefaults || {};
         const totalWidth = metadata.totalWidth ?? firstFrame[2] ?? 240;
         const totalHeight = metadata.totalHeight ?? firstFrame[3] ?? 120;
         const scale = Number.isFinite(metadata.scale) && metadata.scale > 0 ? metadata.scale : 1;
+        const defaultOpacity = toOpacity(visualDefaults.opacity, 1);
+        const animationOpacity = toOpacity(animationDef?.opacity, defaultOpacity);
 
         const path = buildPathRuntime({
             animationDef,
             animationToRun,
             stageWidth,
             stageHeight,
-            frameWidth,
-            frameHeight: firstFrame[3] ?? DEFAULT_FRAME[3],
+            frameWidth: frameWidth * scale,
+            frameHeight: frameHeight * scale,
             sidePadding
         });
 
@@ -241,7 +251,8 @@ function PlayerSpriteAnimator({
                 totalWidth,
                 totalHeight,
                 scale
-            }
+            },
+            animationOpacity
         };
     }, [activeAnimation, animationToRun, sidePadding, stageHeight, stageWidth]);
 
@@ -266,6 +277,18 @@ function PlayerSpriteAnimator({
             shouldLoopFrames,
             path
         } = spriteRuntime;
+
+        const initialPoint = path.totalDurationMs > 0
+            ? getPointAtElapsed(path.segments, 0, path.fallbackPoint)
+            : path.fallbackPoint;
+        const initialFrame = frames[0] || DEFAULT_FRAME;
+
+        setSpriteState({
+            ready: true,
+            x: initialPoint.x,
+            y: initialPoint.y,
+            frame: initialFrame
+        });
 
         const resolveTimeBasedFrame = (elapsedMs) => {
             if (shouldLoopFrames) {
@@ -361,13 +384,23 @@ function PlayerSpriteAnimator({
 
     const [frameX, frameY, frameWidth, frameHeight] = spriteState.frame;
     const scale = spriteRuntime.metadata.scale;
+    const scaledFrameHeight = frameHeight * scale;
+    const pathRangeY = Math.max(0, stageHeight - scaledFrameHeight);
+    const walkInBottom = pathRangeY > 0
+        ? floorOffset - ((floorOffset * spriteState.y) / pathRangeY)
+        : floorOffset;
+    const spriteBottom = activeAnimation === "walk_in"
+        ? Math.max(0, walkInBottom)
+        : (floorOffset + spriteState.y);
+    const facingScaleX = mirrorX ? -1 : 1;
 
     return (
         <div
             className={`barrage-player-sprite ${className || ""}`.trim()}
             style={{
                 "--barrage-player-sprite-x": `${spriteState.x}px`,
-                "--barrage-player-sprite-y": `${floorOffset + spriteState.y}px`
+                "--barrage-player-sprite-y": `${spriteBottom}px`,
+                opacity: spriteRuntime.animationOpacity
             }}
         >
             <div
@@ -376,7 +409,8 @@ function PlayerSpriteAnimator({
                 aria-label={ariaLabel}
                 style={{
                     width: `${frameWidth * scale}px`,
-                    height: `${frameHeight * scale}px`
+                    height: `${frameHeight * scale}px`,
+                    transform: `scaleX(${facingScaleX})`
                 }}
             >
                 <div

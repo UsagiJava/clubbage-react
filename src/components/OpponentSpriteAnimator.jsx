@@ -213,6 +213,7 @@ function OpponentSpriteAnimator({
 
         const firstFrame = frames[0] ?? DEFAULT_FRAME;
         const frameWidth = firstFrame[2] ?? DEFAULT_FRAME[2];
+        const frameHeight = firstFrame[3] ?? DEFAULT_FRAME[3];
 
         const metadata = animationToRun?.metadata || {};
         const totalWidth = metadata.totalWidth ?? firstFrame[2] ?? 240;
@@ -224,8 +225,8 @@ function OpponentSpriteAnimator({
             animationToRun,
             stageWidth,
             stageHeight,
-            frameWidth,
-            frameHeight: firstFrame[3] ?? DEFAULT_FRAME[3],
+            frameWidth: frameWidth * scale,
+            frameHeight: frameHeight * scale,
             sidePadding
         });
 

@@ -1301,6 +1301,7 @@ function Game() {
                         activeOpponentAnimation={activeOpponentAnimation}
                         onOpponentAnimationComplete={handleOpponentAnimationComplete}
                         activePlayerAnimation={activePlayerAnimation}
+                        isPlayerSouthpaw={Boolean(barrageStyleStateRef.current.player1Deck?.hasStanceSouthpaw)}
                         onPlayerAnimationComplete={handlePlayerAnimationComplete}
                     />
                 )}
