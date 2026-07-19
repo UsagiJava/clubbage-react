@@ -24,6 +24,7 @@
       ],
       "frameDurations": [500, 500, 500, 500],
       "pathingNormalized": true,
+      "pathingStartPx": [565, 200],
       "pathing": [
         [1.0, 1.0, 0.5, 0.0]
       ],

@@ -96,6 +96,7 @@ function Game() {
     const [activeOpponentAnimation, setActiveOpponentAnimation] = useState("idle");
 
     const [activePlayerAnimation, setActivePlayerAnimation] = useState("idle");
+    const [isShowdownRevealActive, setIsShowdownRevealActive] = useState(false);
 
     const [isRoundIntroComplete, setIsRoundIntroComplete] = useState(true);
     const cornerRoundRef = useRef(null);
@@ -730,6 +731,7 @@ function Game() {
         barrageRoundRef.current = null;
         aiBarrageInFlightRef.current = false;
         animationScriptTokenRef.current += 1;
+        setIsShowdownRevealActive(false);
         clearPendingOpponentAnimation({ resolvePending: true, setIdle: true });
         clearPendingPlayerAnimation({ resolvePending: true, setIdle: true });
         resetBarrageStyleState();
@@ -921,6 +923,9 @@ function Game() {
         addCommentaryEntry("Bell is about to ring. Close the round strong!", "game_info");
 
         const preClosingSnapshot = getBarrageSnapshot(roundState, null, null);
+        setBarrageState(preClosingSnapshot);
+        setIsShowdownRevealActive(true);
+        await new Promise((resolve) => setTimeout(resolve, 900));
 
         let closingRound;
         try {
@@ -1302,6 +1307,7 @@ function Game() {
                         onOpponentAnimationComplete={handleOpponentAnimationComplete}
                         activePlayerAnimation={activePlayerAnimation}
                         isPlayerSouthpaw={Boolean(barrageStyleStateRef.current.player1Deck?.hasStanceSouthpaw)}
+                        isShowdownRevealActive={isShowdownRevealActive}
                         onPlayerAnimationComplete={handlePlayerAnimationComplete}
                     />
                 )}

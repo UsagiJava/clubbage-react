@@ -88,6 +88,12 @@ const buildPathRuntime = ({
         const isNormalizedPathing = Boolean(
             animationDef?.pathingNormalized ?? animationToRun?.metadata?.pathingNormalized
         );
+        const explicitStartPx = Array.isArray(animationDef?.pathingStartPx) && animationDef.pathingStartPx.length >= 2
+            ? {
+                x: toFiniteNumber(animationDef.pathingStartPx[0], 0),
+                y: toFiniteNumber(animationDef.pathingStartPx[1], 0)
+            }
+            : null;
         const xRange = Math.max(0, stageWidth - frameWidth);
         const yRange = Math.max(0, stageHeight - frameHeight);
         const segmentDurationList = Array.isArray(animationPathingDurations)
@@ -99,10 +105,16 @@ const buildPathRuntime = ({
         if (Array.isArray(firstPathingEntry) && firstPathingEntry.length === 4) {
             for (let i = 0; i < animationPathing.length; i += 1) {
                 const [fromX, fromY, toX, toY] = animationPathing[i];
+                const resolvedFromX = i === 0 && explicitStartPx
+                    ? Math.max(0, Math.min(xRange, explicitStartPx.x))
+                    : resolveAxisValue(fromX, xRange, isNormalizedPathing);
+                const resolvedFromY = i === 0 && explicitStartPx
+                    ? Math.max(0, Math.min(yRange, explicitStartPx.y))
+                    : resolveAxisValue(fromY, yRange, isNormalizedPathing);
                 segments.push({
                     from: {
-                        x: resolveAxisValue(fromX, xRange, isNormalizedPathing),
-                        y: resolveAxisValue(fromY, yRange, isNormalizedPathing)
+                        x: resolvedFromX,
+                        y: resolvedFromY
                     },
                     to: {
                         x: resolveAxisValue(toX, xRange, isNormalizedPathing),
@@ -267,6 +279,18 @@ function OpponentSpriteAnimator({
             shouldLoopFrames,
             path
         } = spriteRuntime;
+
+        const initialPoint = path.totalDurationMs > 0
+            ? getPointAtElapsed(path.segments, 0, path.fallbackPoint)
+            : path.fallbackPoint;
+        const initialFrame = frames[0] || DEFAULT_FRAME;
+
+        setSpriteState({
+            ready: true,
+            x: initialPoint.x,
+            y: initialPoint.y,
+            frame: initialFrame
+        });
 
         const resolveTimeBasedFrame = (elapsedMs) => {
             if (shouldLoopFrames) {

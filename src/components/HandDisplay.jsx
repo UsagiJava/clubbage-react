@@ -31,6 +31,7 @@ function HandDisplay({
     onShuffle,
     sendDisabled = false,
     faceDown = false,
+    flipCards = false,
     disabled = false,
     label = "Hand"
 }) {
@@ -47,7 +48,7 @@ function HandDisplay({
                         <button
                             key={card.id}
                             type="button"
-                            className={`corner-card${faceDown ? " corner-card--facedown" : ""}${isSelected ? " corner-card--selected" : ""}`}
+                            className={`corner-card${faceDown ? " corner-card--facedown" : ""}${isSelected ? " corner-card--selected" : ""}${flipCards && !faceDown ? " corner-card--flip-reveal" : ""}`}
                             onClick={() => !faceDown && !disabled && onToggleCard?.(card.id)}
                             disabled={faceDown || disabled}
                             aria-label={faceDown ? "Face-down card" : `${card.rank} of ${card.suit}`}

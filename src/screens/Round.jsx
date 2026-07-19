@@ -83,6 +83,7 @@ function Ring({
     activeOpponentAnimation,
     activePlayerAnimation,
     isPlayerSouthpaw,
+    isShowdownRevealActive,
     onOpponentAnimationComplete,
     onPlayerAnimationComplete
 }) {
@@ -287,11 +288,24 @@ function Ring({
             {/*<p className="barrage-zone-label">Crib ({cribOwnerName})</p>*/}
             <div className="barrage-crib-cards">
                 {(barrage?.cribCards || []).map((card, i) => (
-                    <div
-                        key={card.id ?? i}
-                        className="corner-card corner-card--facedown small"
-                        aria-label="Crib card"
-                    />
+                    isShowdownRevealActive ? (
+                        <div
+                            key={card.id ?? i}
+                            className="corner-card small corner-card--flip-reveal"
+                            aria-label={`Crib card: ${card.rank} of ${card.suit}`}
+                        >
+                            <span className="corner-card__rank">{card.rank}</span>
+                            <span className="corner-card__suit" aria-hidden="true">
+                                <i className={`bi ${SUIT_ICONS[card.suit] || "bi-question-circle"} d-block`} />
+                            </span>
+                        </div>
+                    ) : (
+                        <div
+                            key={card.id ?? i}
+                            className="corner-card corner-card--facedown small"
+                            aria-label="Crib card"
+                        />
+                    )
                 ))}
                 {Array.from({
                     length: Math.max(0, 4 - (barrage?.cribCards?.length ?? 0))
@@ -440,7 +454,8 @@ function Ring({
                         onSortBySuit={!isOpponentAi ? onSortOpponentBarrageHandBySuitValue : null}
                         onSortByValue={!isOpponentAi ? onSortOpponentBarrageHandByValue : null}
                         onShuffle={!isOpponentAi ? onShuffleOpponentBarrageHand : null}
-                        faceDown={isOpponentAi}
+                        faceDown={isOpponentAi && !isShowdownRevealActive}
+                        flipCards={isShowdownRevealActive}
                         disabled={
                             isRoundLocked ||
                             isOpponentAi ||
