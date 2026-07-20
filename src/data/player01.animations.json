@@ -1,6 +1,13 @@
 {
   "spriteSheet": "assets/images/player01.png",
   "animations": {
+    "METADATA.PATHING_DOCUMENTATION": {
+      "pathingNormalized": "true: values in pathing are treated as normalized ratios from 0.0 to 1.0. false: values in pathing are treated as pixel coordinates.",
+      "pathingStartPx": "Pixel override for the first segment start only. If not provided, the first segment start is assumed to be the current position of the sprite.",
+      "pathing": "Defines movement over time. Segment format: [fromX, fromY, toX, toY] or Point format (engine connects points in order): [x, y]",
+      "pathingDurations": "Array of milliseconds for each pathing movement segment.",
+      "NOTE:": "pathing for 'dodge', 'hit_face', and 'hit_body' should be setup to move left to right. The stance a boxer is in (southpaw or orthodox) will determine if the animation is mirrored horizontally."
+    },
     "idle": {
       "sourceRows": [1],
       "sourceLabels": ["idle"],
@@ -69,9 +76,9 @@
       "frameDurations": [350, 350],
       "loop": false
     },
-    "knocked_down": {
-      "sourceRows": [7],
-      "sourceLabels": ["knocked_down"],
+    "hit_face": {
+      "sourceRows": [3],
+      "sourceLabels": ["hit_face"],
       "frames": [
         [0, 720, 60, 120],
         [60, 720, 60, 120],
@@ -79,12 +86,11 @@
         [180, 720, 60, 120]
       ],
       "frameDurations": [350, 350, 350, 350],
-      "opacity": 1.0,
       "loop": false
     },
-    "block": {
-      "sourceRows": [8],
-      "sourceLabels": ["block"],
+    "hit_body": {
+      "sourceRows": [3],
+      "sourceLabels": ["hit_body"],
       "frames": [
         [0, 840, 60, 120],
         [60, 840, 60, 120],
@@ -95,15 +101,17 @@
       "loop": false
     },
     "dodge": {
-      "sourceRows": [9],
+      "sourceRows": [4],
       "sourceLabels": ["dodge"],
       "frames": [
-        [0, 960, 60, 120],
-        [60, 960, 60, 120],
-        [120, 960, 60, 120],
-        [180, 960, 60, 120]
+        [0, 360, 60, 120]
       ],
-      "frameDurations": [350, 350, 350, 350],
+      "frameDurations": [300],
+      "pathingNormalized": true,
+      "pathing": [
+        [0.5, 0.0, 0.53, 0.0]
+      ],
+      "pathingDurations": [300],
       "loop": false
     },
     "lay": {
@@ -133,6 +141,7 @@
         [180, 1200, 60, 120]
       ],
       "frameDurations": [350, 350, 350, 350],
+      "opacity": 1.0,
       "loop": false
     },
     "taunt": {
@@ -181,7 +190,7 @@
           "row": "Starts on top-left of spritesheet. Value starts at 1. Increment by 1 for each subsequent row of rowHeight set above.",
           "label": "Name of the animation this rowGuide corresponds to.",
           "y": "The y-coordinate of the top-left corner of the row on the spritesheet. TODO: just use frameRange second available value",
-          "frameRange": "[top-left, bottom-right, width, height]"
+          "frameRange": "[top-left-x, top-left-y, width, height]"
         }
       },
       {
@@ -215,22 +224,22 @@
         "frameRange": [0, 240, 120, 120]
       },
       {
-        "row": 7,
-        "label": "knocked_down",
-        "y": 720,
-        "frameRange": [0, 720, 240, 840]
+        "row": 3,
+        "label": "hit_face",
+        "y": 240,
+        "frameRange": [120, 240, 60, 120]
       },
       {
-        "row": 8,
-        "label": "block",
-        "y": 840,
-        "frameRange": [0, 840, 240, 960]
+        "row": 3,
+        "label": "hit_body",
+        "y": 240,
+        "frameRange": [180, 240, 60, 120]
       },
       {
-        "row": 9,
+        "row": 4,
         "label": "dodge",
-        "y": 960,
-        "frameRange": [0, 960, 240, 1080]
+        "y": 360,
+        "frameRange": [0, 360, 60, 120]
       },
       {
         "row": 10,

@@ -83,6 +83,7 @@ function Ring({
     activeOpponentAnimation,
     activePlayerAnimation,
     isPlayerSouthpaw,
+    isOpponentSouthpaw,
     isShowdownRevealActive,
     onOpponentAnimationComplete,
     onPlayerAnimationComplete
@@ -373,6 +374,7 @@ function Ring({
                         className={hidePlayerDuringOpponentIntro ? "barrage-player-sprite--intro-hidden" : ""}
                         floorOffset={PLAYER_STAGE_FLOOR_OFFSET}
                         mirrorX={Boolean(isPlayerSouthpaw)}
+                        isSouthpaw={Boolean(isPlayerSouthpaw)}
                         onAnimationComplete={onPlayerAnimationComplete}
                     />
                 ) : null}
@@ -385,6 +387,8 @@ function Ring({
                         activeAnimation={activeOpponentAnimation}
                         className="barrage-opponent-sprite"
                         floorOffset={OPPONENT_STAGE_FLOOR_OFFSET}
+                        mirrorX={Boolean(!isOpponentSouthpaw && activeOpponentAnimation === "dodge")}
+                        isSouthpaw={Boolean(isOpponentSouthpaw)}
                         onAnimationComplete={onOpponentAnimationComplete}
                     />
                 ) : null}

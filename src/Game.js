@@ -868,6 +868,35 @@ function Game() {
         return true;
     };
 
+    const triggerBarrageGoAnimation = (deckName) => {
+        const actingActor = deckName === "player1Deck" ? "player" : "opponent";
+        const defendingActor = actingActor === "player" ? "opponent" : "player";
+        const actingDeck = getDeckDisplayData(deckName);
+        const defendingDeck = getDeckDisplayData(deckName === "player1Deck" ? "player2Deck" : "player1Deck");
+
+        addCommentaryEntry([
+            { text: defendingDeck.name, italic: true, color: defendingDeck.color },
+            " executes a flawless ",
+            { text: "pull", bold: true },
+            ", avoiding a punch telegraphed by ",
+            { text: actingDeck.name, italic: true, color: actingDeck.color },
+            "."
+        ], "game_action");
+
+        void playParallel([
+            animationStep(actingActor, "jab", {
+                action: "barrage-go-jab",
+                fallbackMs: 2500,
+                returnToIdle: true
+            }),
+            animationStep(defendingActor, "dodge", {
+                action: "barrage-go-dodge",
+                fallbackMs: 2500,
+                returnToIdle: true
+            })
+        ]);
+    };
+
     const toggleBarrageCardSelection = (cardId, deckName = "player1Deck") => {
         if (!isRoundIntroComplete) return;
         if (!barrageState || barrageState.isComplete || barrageState.isKO) return;
@@ -1028,7 +1057,10 @@ function Game() {
             const pegCount = roundState.barrage.pegCount;
             const validCards = hand.filter((c) => pegCount + c.pegValue <= 31);
             if (validCards.length === 0) {
-                handleBarrageGo(roundState, "player2Deck");
+                const didCallGo = handleBarrageGo(roundState, "player2Deck");
+                if (didCallGo) {
+                    triggerBarrageGoAnimation("player2Deck");
+                }
             } else {
                 const card = await opponent.selectCardToPlay(hand, validCards, {
                     pegCount,
@@ -1114,7 +1146,10 @@ function Game() {
             let playedCard = null;
             let pegResult = null;
             if (!hasLegalCard) {
-                handleBarrageGo(roundState, deckName);
+                const didCallGo = handleBarrageGo(roundState, deckName);
+                if (didCallGo) {
+                    triggerBarrageGoAnimation(deckName);
+                }
             } else if (!selectedId) {
                 return;
             } else {
@@ -1129,7 +1164,10 @@ function Game() {
                     if (isPlayer1) setSelectedBarragePlayerCardId(null);
                     else setSelectedBarrageOpponentCardId(null);
                     if (!canDeckPlayAtPegCount(deckName)) {
-                        handleBarrageGo(roundState, deckName);
+                        const didCallGo = handleBarrageGo(roundState, deckName);
+                        if (didCallGo) {
+                            triggerBarrageGoAnimation(deckName);
+                        }
                     }
                     return;
                 }
@@ -1307,6 +1345,7 @@ function Game() {
                         onOpponentAnimationComplete={handleOpponentAnimationComplete}
                         activePlayerAnimation={activePlayerAnimation}
                         isPlayerSouthpaw={Boolean(barrageStyleStateRef.current.player1Deck?.hasStanceSouthpaw)}
+                        isOpponentSouthpaw={Boolean(barrageStyleStateRef.current.player2Deck?.hasStanceSouthpaw)}
                         isShowdownRevealActive={isShowdownRevealActive}
                         onPlayerAnimationComplete={handlePlayerAnimationComplete}
                     />

@@ -70,12 +70,14 @@ const getPointAtElapsed = (segments, elapsedMs, fallbackPoint = { x: 0, y: 0 }) 
 
 const buildPathRuntime = ({
     animationDef,
+    animationName,
     animationToRun,
     stageWidth,
     stageHeight,
     frameWidth,
     frameHeight,
-    sidePadding
+    sidePadding,
+    flipNormalizedDodgeToX = false
 }) => {
     const defaultAnchorX = Math.max(sidePadding, Math.round((stageWidth / 2) - (frameWidth / 2)));
     const defaultPoint = { x: defaultAnchorX, y: 0 };
@@ -105,6 +107,10 @@ const buildPathRuntime = ({
         if (Array.isArray(firstPathingEntry) && firstPathingEntry.length === 4) {
             for (let i = 0; i < animationPathing.length; i += 1) {
                 const [fromX, fromY, toX, toY] = animationPathing[i];
+                const adjustedToX =
+                    isNormalizedPathing && animationName === "dodge" && flipNormalizedDodgeToX
+                        ? fromX - (toX - fromX)
+                        : toX;
                 const resolvedFromX = i === 0 && explicitStartPx
                     ? Math.max(0, Math.min(xRange, explicitStartPx.x))
                     : resolveAxisValue(fromX, xRange, isNormalizedPathing);
@@ -117,7 +123,7 @@ const buildPathRuntime = ({
                         y: resolvedFromY
                     },
                     to: {
-                        x: resolveAxisValue(toX, xRange, isNormalizedPathing),
+                        x: resolveAxisValue(adjustedToX, xRange, isNormalizedPathing),
                         y: resolveAxisValue(toY, yRange, isNormalizedPathing)
                     },
                     durationMs: segmentDurationList[i] ?? segmentDurationList[segmentDurationList.length - 1] ?? 1000
@@ -194,6 +200,8 @@ function OpponentSpriteAnimator({
     className,
     floorOffset = 106,
     sidePadding = 24,
+    mirrorX = false,
+    isSouthpaw = false,
     ariaLabel = "Animated opponent sprite",
     onAnimationComplete
 }) {
@@ -234,12 +242,14 @@ function OpponentSpriteAnimator({
 
         const path = buildPathRuntime({
             animationDef,
+            animationName,
             animationToRun,
             stageWidth,
             stageHeight,
             frameWidth: frameWidth * scale,
             frameHeight: frameHeight * scale,
-            sidePadding
+            sidePadding,
+            flipNormalizedDodgeToX: isSouthpaw
         });
 
         return {
@@ -256,7 +266,7 @@ function OpponentSpriteAnimator({
                 scale
             }
         };
-    }, [activeAnimation, animationToRun, sidePadding, stageHeight, stageWidth]);
+    }, [activeAnimation, animationToRun, isSouthpaw, sidePadding, stageHeight, stageWidth]);
 
     useEffect(() => {
         if (!spriteRuntime || !stageWidth) {
@@ -386,6 +396,7 @@ function OpponentSpriteAnimator({
 
     const [frameX, frameY, frameWidth, frameHeight] = spriteState.frame;
     const scale = spriteRuntime.metadata.scale;
+    const facingScaleX = mirrorX ? -1 : 1;
 
     return (
         <div
@@ -401,7 +412,8 @@ function OpponentSpriteAnimator({
                 aria-label={ariaLabel}
                 style={{
                     width: `${frameWidth * scale}px`,
-                    height: `${frameHeight * scale}px`
+                    height: `${frameHeight * scale}px`,
+                    transform: `scaleX(${facingScaleX})`
                 }}
             >
                 <div

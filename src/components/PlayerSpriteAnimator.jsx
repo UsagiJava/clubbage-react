@@ -75,12 +75,14 @@ const getPointAtElapsed = (segments, elapsedMs, fallbackPoint = { x: 0, y: 0 }) 
 
 const buildPathRuntime = ({
     animationDef,
+    animationName,
     animationToRun,
     stageWidth,
     stageHeight,
     frameWidth,
     frameHeight,
-    sidePadding
+    sidePadding,
+    flipNormalizedDodgeToX = false
 }) => {
     const defaultAnchorX = Math.max(sidePadding, Math.round((stageWidth / 2) - (frameWidth / 2)));
     const defaultPoint = { x: defaultAnchorX, y: 0 };
@@ -104,13 +106,17 @@ const buildPathRuntime = ({
         if (Array.isArray(firstPathingEntry) && firstPathingEntry.length === 4) {
             for (let i = 0; i < animationPathing.length; i += 1) {
                 const [fromX, fromY, toX, toY] = animationPathing[i];
+                const adjustedToX =
+                    isNormalizedPathing && animationName === "dodge" && flipNormalizedDodgeToX
+                        ? fromX - (toX - fromX)
+                        : toX;
                 segments.push({
                     from: {
                         x: resolveAxisValue(fromX, xRange, isNormalizedPathing),
                         y: resolveAxisValue(fromY, yRange, isNormalizedPathing)
                     },
                     to: {
-                        x: resolveAxisValue(toX, xRange, isNormalizedPathing),
+                        x: resolveAxisValue(adjustedToX, xRange, isNormalizedPathing),
                         y: resolveAxisValue(toY, yRange, isNormalizedPathing)
                     },
                     durationMs: segmentDurationList[i] ?? segmentDurationList[segmentDurationList.length - 1] ?? 1000
@@ -188,6 +194,7 @@ function PlayerSpriteAnimator({
     floorOffset = 76,
     sidePadding = 24,
     mirrorX = false,
+    isSouthpaw = false,
     ariaLabel = "Animated player sprite",
     onAnimationComplete
 }) {
@@ -231,12 +238,14 @@ function PlayerSpriteAnimator({
 
         const path = buildPathRuntime({
             animationDef,
+            animationName,
             animationToRun,
             stageWidth,
             stageHeight,
             frameWidth: frameWidth * scale,
             frameHeight: frameHeight * scale,
-            sidePadding
+            sidePadding,
+            flipNormalizedDodgeToX: !isSouthpaw
         });
 
         return {
@@ -254,7 +263,7 @@ function PlayerSpriteAnimator({
             },
             animationOpacity
         };
-    }, [activeAnimation, animationToRun, sidePadding, stageHeight, stageWidth]);
+    }, [activeAnimation, animationToRun, isSouthpaw, sidePadding, stageHeight, stageWidth]);
 
     useEffect(() => {
         if (!spriteRuntime || !stageWidth) {
