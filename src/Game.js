@@ -31,6 +31,14 @@ const CONTINUE_PASSCODE = "1122";
 const SAVE_KEY = "clubbage-progress";
 const CORNER_RED = "#F08080";
 const CORNER_BLUE = "#4169E1";
+const ATTACK_REACTION_MODE = "sequence"; // "sequence" | "parallel"
+const ATTACK_REACTION_OFFSET_MS = 120;
+const ATTACK_REACTION_BY_ATTACK = {
+    jab: { mode: "parallel", offsetMs: 0 },
+    cross: { mode: "parallel", offsetMs: 0 },
+    hook: { mode: "sequence", offsetMs: 90 },
+    uppercut: { mode: "sequence", offsetMs: 110 }
+};
 
 function createInitialMatchState() {
     return {
@@ -255,12 +263,16 @@ function Game() {
     };
 
     const runAnimationScript = async (steps, options = {}) => {
-        const { lockRoundIntro = false } = options;
-        const scriptToken = animationScriptTokenRef.current + 1;
-        animationScriptTokenRef.current = scriptToken;
+        const { lockRoundIntro = false, lightweight = false } = options;
+        const scriptToken = lightweight
+            ? animationScriptTokenRef.current
+            : animationScriptTokenRef.current + 1;
 
-        clearPendingOpponentAnimation({ resolvePending: true, setIdle: true });
-        clearPendingPlayerAnimation({ resolvePending: true, setIdle: true });
+        if (!lightweight) {
+            animationScriptTokenRef.current = scriptToken;
+            clearPendingOpponentAnimation({ resolvePending: true, setIdle: true });
+            clearPendingPlayerAnimation({ resolvePending: true, setIdle: true });
+        }
 
         if (lockRoundIntro) {
             setIsRoundIntroComplete(false);
@@ -299,6 +311,78 @@ function Game() {
         return runAnimationScript([steps], options);
     };
 
+    const waitMs = (ms = 0) => {
+        return new Promise((resolve) => {
+            window.setTimeout(resolve, Math.max(0, ms));
+        });
+    };
+
+    const getOpposingActor = (actor) => {
+        return actor === "player" ? "opponent" : "player";
+    };
+
+    const getAttackReactionSettings = (attackAnimationName) => {
+        return ATTACK_REACTION_BY_ATTACK[attackAnimationName] || {};
+    };
+
+    const playAttackWithReaction = ({
+        attackerActor,
+        attackAnimationName,
+        attackAction,
+        reactionAction,
+        attackFallbackMs = 4000,
+        reactionFallbackMs = 2500,
+        mode,
+        reactionOffsetMs
+    }) => {
+        const reactionAnimationToPlay = getReactionName(attackAnimationName);
+        const defenderActor = getOpposingActor(attackerActor);
+        const attackReactionSettings = getAttackReactionSettings(attackAnimationName);
+        const resolvedMode = mode ?? attackReactionSettings.mode ?? ATTACK_REACTION_MODE;
+        const resolvedReactionOffsetMs =
+            reactionOffsetMs ?? attackReactionSettings.offsetMs ?? ATTACK_REACTION_OFFSET_MS;
+
+        const attackStep = animationStep(attackerActor, attackAnimationName, {
+            action: attackAction,
+            fallbackMs: attackFallbackMs,
+            returnToIdle: true
+        });
+
+        if (!reactionAnimationToPlay) {
+            return playSequence([attackStep], { lightweight: true }).then(() => attackAnimationName);
+        }
+
+        const reactionStep = animationStep(defenderActor, reactionAnimationToPlay, {
+            action: reactionAction,
+            fallbackMs: reactionFallbackMs,
+            returnToIdle: true
+        });
+
+        if (resolvedMode === "parallel") {
+            if (resolvedReactionOffsetMs <= 0) {
+                return playParallel([attackStep, reactionStep], { lightweight: true }).then(() => attackAnimationName);
+            }
+
+            return Promise.all([
+                playActorAnimation(attackerActor, attackAnimationName, {
+                    action: attackAction,
+                    fallbackMs: attackFallbackMs,
+                    returnToIdle: true
+                }),
+                (async () => {
+                    await waitMs(resolvedReactionOffsetMs);
+                    await playActorAnimation(defenderActor, reactionAnimationToPlay, {
+                        action: reactionAction,
+                        fallbackMs: reactionFallbackMs,
+                        returnToIdle: true
+                    });
+                })()
+            ]).then(() => attackAnimationName);
+        }
+
+        return playSequence([attackStep, reactionStep], { lightweight: true }).then(() => attackAnimationName);
+    };
+
     const playOpponentAnimationFromDamage = (damagePoints = 0) => {
         if (damagePoints <= 0) {
             setActiveOpponentAnimation("idle");
@@ -307,10 +391,11 @@ function Game() {
         }
 
         const animationToPlay = getAttackName(damagePoints);
-        return playActorAnimation("opponent", animationToPlay, {
-            action: "opponent-scored",
-            fallbackMs: 4000,
-            returnToIdle: true
+        return playAttackWithReaction({
+            attackerActor: "opponent",
+            attackAnimationName: animationToPlay,
+            attackAction: "opponent-scored",
+            reactionAction: "player-hit-reaction"
         });
     };
 
@@ -322,10 +407,11 @@ function Game() {
         }
 
         const animationToPlay = getAttackName(damagePoints);
-        return playActorAnimation("player", animationToPlay, {
-            action: "player-scored",
-            fallbackMs: 4000,
-            returnToIdle: true
+        return playAttackWithReaction({
+            attackerActor: "player",
+            attackAnimationName: animationToPlay,
+            attackAction: "player-scored",
+            reactionAction: "opponent-hit-reaction"
         });
     };
 
@@ -384,6 +470,18 @@ function Game() {
         if (points <= 4) return "cross";
         if (points <= 6) return "hook";
         return "uppercut";
+    };
+
+    const getReactionName = (attackName) => {
+        if (attackName === "hook" || attackName === "uppercut") {
+            return "hit_face";
+        }
+
+        if (attackName === "jab" || attackName === "cross") {
+            return "hit_body";
+        }
+
+        return null;
     };
 
     const describePeggingReason = (result = {}, playedCard = null) => {

@@ -107,7 +107,9 @@ const buildPathRuntime = ({
             for (let i = 0; i < animationPathing.length; i += 1) {
                 const [fromX, fromY, toX, toY] = animationPathing[i];
                 const adjustedToX =
-                    isNormalizedPathing && animationName === "dodge" && flipNormalizedDodgeToX
+                    isNormalizedPathing &&
+                    ["dodge", "hit_face", "hit_body"].includes(animationName) &&
+                    flipNormalizedDodgeToX
                         ? fromX - (toX - fromX)
                         : toX;
                 segments.push({
